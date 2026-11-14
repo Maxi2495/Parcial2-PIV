@@ -1,0 +1,166 @@
+@baseUrl = http://localhost:8000/api/v1
+
+### 0. Listar unidades de medida (R1 - verifica seed inicial: 1=kg, 2=g, 3=L, 4=mL, 5=pieza[contable], 6=docena[contable])
+GET {{baseUrl}}/unidades-medida
+
+### 1. Crear producto por peso con stock > 0 -> 201 Created (hay_stock: true)
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Ravioles de Ricota",
+  "descripcion": "Pasta fresca artesanal",
+  "precio_base": 8500.50,
+  "unidad_venta_id": 1,
+  "stock_cantidad": 4.500,
+  "disponible": true
+}
+
+### 2. Crear producto contable con stock entero -> 201 Created (hay_stock: true)
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Empanada Criolla",
+  "descripcion": "Carne cortada a cuchillo",
+  "precio_base": 1200.00,
+  "unidad_venta_id": 5,
+  "stock_cantidad": 24,
+  "disponible": true
+}
+
+### 3. Detalle de producto por ID -> 200 OK (verifica unidad_venta anidada y hay_stock = true antes de llevar a 0)
+GET {{baseUrl}}/productos/1
+
+### 4. Actualizar producto (PUT): llevar stock_cantidad a 0 y pausar venta (disponible=false) -> 200 OK (hay_stock pasa a false)
+PUT {{baseUrl}}/productos/1
+Content-Type: application/json
+
+{
+  "nombre": "Ravioles de Ricota",
+  "descripcion": "Pasta fresca artesanal - sin stock temporal",
+  "precio_base": 9000.00,
+  "unidad_venta_id": 1,
+  "stock_cantidad": 0,
+  "disponible": false
+}
+
+### 5. Verificar GET/{id} después de llevar stock a 0 -> 200 OK (hay_stock: false, activo sigue true: RN-11 y RN-12)
+GET {{baseUrl}}/productos/1
+
+### 6. Listar productos activos (por defecto skip=0, limit=10) -> 200 OK
+GET {{baseUrl}}/productos?skip=0&limit=10
+
+### 7. Filtro disponible=false -> 200 OK
+GET {{baseUrl}}/productos?disponible=false
+
+### 8. Filtro search parcial sin distinguir mayúsculas -> 200 OK
+GET {{baseUrl}}/productos?search=rAvIoL
+
+### 9. Filtro categoria_id -> 200 OK
+GET {{baseUrl}}/productos?categoria_id=1
+
+### 10. Error 422 (RN-01): nombre menor a 3 caracteres
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Ab",
+  "precio_base": 1000,
+  "unidad_venta_id": 1,
+  "stock_cantidad": 5
+}
+
+### 11. Error 422 (RN-01): precio_base o stock_cantidad negativo
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Salsa Bolognesa",
+  "precio_base": 2500,
+  "unidad_venta_id": 3,
+  "stock_cantidad": -2
+}
+
+### 12. Error 422 (RN-10): stock con decimales sobre unidad de venta contable (unidad 5 = pieza) en POST
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Tarta Individual",
+  "precio_base": 4500,
+  "unidad_venta_id": 5,
+  "stock_cantidad": 2.5
+}
+
+### 13. Error 422 (RN-10): stock con decimales sobre unidad contable en PUT
+PUT {{baseUrl}}/productos/2
+Content-Type: application/json
+
+{
+  "nombre": "Empanada Criolla",
+  "descripcion": "Carne cortada a cuchillo",
+  "precio_base": 1200.00,
+  "unidad_venta_id": 5,
+  "stock_cantidad": 10.25,
+  "disponible": true
+}
+
+### 14. Error 404 (RN-03): crear producto con unidad_venta_id inexistente
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Fideos al Huevo",
+  "precio_base": 3500,
+  "unidad_venta_id": 999,
+  "stock_cantidad": 10
+}
+
+### 15. Error 404 (RN-03): consultar producto con ID inexistente
+GET {{baseUrl}}/productos/999
+
+### 16. Error 409 (RN-02): crear producto con nombre repetido entre los activos
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Empanada Criolla",
+  "precio_base": 1500,
+  "unidad_venta_id": 5,
+  "stock_cantidad": 10
+}
+
+### 17. Anular producto (DELETE baja lógica) -> 204 No Content
+DELETE {{baseUrl}}/productos/2
+
+### 18. Filtro activo=false (verifica que el producto 2 aparece como anulado con anulado_at cargado) -> 200 OK
+GET {{baseUrl}}/productos?activo=false
+
+### 19. Error 409 (RN-04): intentar anular un producto que ya está anulado
+DELETE {{baseUrl}}/productos/2
+
+### 20. Error 409 (RN-05): intentar modificar con PUT un producto anulado
+PUT {{baseUrl}}/productos/2
+Content-Type: application/json
+
+{
+  "nombre": "Empanada Criolla Editada",
+  "precio_base": 1800,
+  "unidad_venta_id": 5,
+  "stock_cantidad": 5,
+  "disponible": true
+}
+
+### 21. RN-02: Verificar que un producto anulado libera su nombre (crear de nuevo "Empanada Criolla") -> 201 Created
+POST {{baseUrl}}/productos
+Content-Type: application/json
+
+{
+  "nombre": "Empanada Criolla",
+  "descripcion": "Receta renovada",
+  "precio_base": 1400,
+  "unidad_venta_id": 5,
+  "stock_cantidad": 12,
+  "disponible": true
+}
