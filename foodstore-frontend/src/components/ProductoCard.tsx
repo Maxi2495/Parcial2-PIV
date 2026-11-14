@@ -93,12 +93,13 @@ export function ProductoCard({
           Editar
         </button>
         <button
-          type="button"
-          onClick={() => onToggleDisponible(producto)}
-          className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium py-2 px-3 rounded-lg transition-colors cursor-pointer"
-        >
-          {producto.disponible ? 'Pausar' : 'Activar'}
-        </button>
+         type="button"
+         onClick={() => onToggleDisponible(producto)}
+         title={producto.disponible ? 'Pausar la venta' : 'Reanudar la venta'}
+         className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium py-2 px-3 rounded-lg transition-colors cursor-pointer"
+>
+  Disponibilidad
+</button>
         <button
           type="button"
           onClick={() => onAnular(producto.id)}

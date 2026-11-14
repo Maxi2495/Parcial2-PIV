@@ -20,3 +20,10 @@ class UnidadMedida(SQLModel, table=True):
     tipo: TipoUnidad
 
     productos: list["Producto"] = Relationship(back_populates="unidad_venta")
+
+
+class UnidadMedidaPublic(SQLModel):
+    id: int
+    nombre: str
+    simbolo: str
+    tipo: TipoUnidad
