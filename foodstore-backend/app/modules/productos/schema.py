@@ -53,3 +53,15 @@ class ProductoPublic(SQLModel):
     anulado_at: datetime | None
     unidad_venta: UnidadMedidaNested
     categorias: list[CategoriaNested] = []
+    
+class ProductoCategoriaCreate(SQLModel):
+    categoria_id: int
+    es_principal: bool = False
+
+
+class ProductoCategoriaPublic(SQLModel):
+    categoria_id: int
+    nombre: str
+    descripcion: str | None = None
+    activo: bool
+    es_principal: bool

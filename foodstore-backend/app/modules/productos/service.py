@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from fastapi import HTTPException
 from sqlmodel import Session, col, select
-
+from app.modules.categorias.model import Categoria
 from app.modules.productos.model import Producto, ProductoCategoria
 from app.modules.productos.schema import (
     CategoriaNested,
@@ -11,6 +11,8 @@ from app.modules.productos.schema import (
     ProductoPublic,
     ProductoUpdate,
     UnidadMedidaNested,
+    ProductoCategoriaCreate,
+    ProductoCategoriaPublic
 )
 from app.modules.unidades_medida.model import TipoUnidad, UnidadMedida
 
@@ -187,3 +189,90 @@ def anular_producto(session: Session, producto_id: int) -> None:
     producto.anulado_at = datetime.now(timezone.utc)
     session.add(producto)
     session.commit()
+    
+def clasificar_producto(
+    session: Session, producto_id: int, data: ProductoCategoriaCreate
+) -> ProductoCategoriaPublic:
+    # RN-03: Verificar existencia de producto y categoría
+    producto = session.get(Producto, producto_id)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    categoria = session.get(Categoria, data.categoria_id)
+    if not categoria:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+
+    # RN-08: No se puede clasificar un producto anulado ni en una categoría anulada
+    if not producto.activo:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede clasificar un producto anulado",
+        )
+    if not categoria.activo:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede clasificar un producto en una categoría anulada",
+        )
+
+    # RN-07: Un producto no puede clasificarse dos veces en la misma categoría
+    vinculo_existente = session.get(
+        ProductoCategoria, (producto_id, data.categoria_id)
+    )
+    if vinculo_existente:
+        raise HTTPException(
+            status_code=409,
+            detail="El producto ya está clasificado en esta categoría",
+        )
+
+    # RN-09: A lo sumo una categoría principal por producto
+    if data.es_principal:
+        stmt_principales = select(ProductoCategoria).where(
+            ProductoCategoria.producto_id == producto_id,
+            ProductoCategoria.es_principal == True,  # noqa: E712
+        )
+        for vinc_anterior in session.exec(stmt_principales).all():
+            vinc_anterior.es_principal = False
+            session.add(vinc_anterior)
+
+    nuevo_vinculo = ProductoCategoria(
+        producto_id=producto_id,
+        categoria_id=data.categoria_id,
+        es_principal=data.es_principal,
+    )
+    session.add(nuevo_vinculo)
+    session.commit()
+    session.refresh(nuevo_vinculo)
+
+    return ProductoCategoriaPublic(
+        categoria_id=categoria.id,  # type: ignore[arg-type]
+        nombre=categoria.nombre,
+        descripcion=categoria.descripcion,
+        activo=categoria.activo,
+        es_principal=nuevo_vinculo.es_principal,
+    )
+
+
+def listar_categorias_de_producto(
+    session: Session, producto_id: int
+) -> list[ProductoCategoriaPublic]:
+    producto = session.get(Producto, producto_id)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    stmt = (
+        select(ProductoCategoria, Categoria)
+        .join(Categoria, ProductoCategoria.categoria_id == Categoria.id)  # type: ignore[arg-type]
+        .where(ProductoCategoria.producto_id == producto_id)
+    )
+    resultados = session.exec(stmt).all()
+
+    return [
+        ProductoCategoriaPublic(
+            categoria_id=cat.id,  # type: ignore[arg-type]
+            nombre=cat.nombre,
+            descripcion=cat.descripcion,
+            activo=cat.activo,
+            es_principal=vinc.es_principal,
+        )
+        for vinc, cat in resultados
+    ]

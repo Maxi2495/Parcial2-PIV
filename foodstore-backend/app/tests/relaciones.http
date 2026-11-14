@@ -1,0 +1,82 @@
+@baseUrl = http://localhost:8000/api/v1
+
+### 1. Crear Categoría 1 ("Pastas") -> 201 Created
+POST {{baseUrl}}/categorias
+Content-Type: application/json
+
+{
+  "nombre": "Pastas",
+  "descripcion": "Pastas frescas y rellenas"
+}
+
+### 2. Crear Categoría 2 ("Especialidades") -> 201 Created
+POST {{baseUrl}}/categorias
+Content-Type: application/json
+
+{
+  "nombre": "Especialidades",
+  "descripcion": "Platos destacados de la casa"
+}
+
+### 3. Error 409 (RN-02): Intentar crear categoría con nombre repetido entre las activas
+POST {{baseUrl}}/categorias
+Content-Type: application/json
+
+{
+  "nombre": "Pastas",
+  "descripcion": "Intento duplicado"
+}
+
+### 4. Listar categorías activas -> 200 OK
+GET {{baseUrl}}/categorias
+
+### 5. Clasificar Producto 1 en Categoría 1 ("Pastas") como principal (es_principal = true) -> 201 Created
+POST {{baseUrl}}/productos/1/categorias
+Content-Type: application/json
+
+{
+  "categoria_id": 1,
+  "es_principal": true
+}
+
+### 6. Verificar categorías del Producto 1 -> 200 OK ("Pastas" figura con es_principal: true)
+GET {{baseUrl}}/productos/1/categorias
+
+### 7. RN-09: Clasificar Producto 1 en Categoría 2 ("Especialidades") también con es_principal = true -> 201 Created
+POST {{baseUrl}}/productos/1/categorias
+Content-Type: application/json
+
+{
+  "categoria_id": 2,
+  "es_principal": true
+}
+
+### 8. Verificar cambio de principal (RN-09): Categoría 1 pasó a es_principal: false y Categoría 2 quedó en true -> 200 OK
+GET {{baseUrl}}/productos/1/categorias
+
+### 9. Error 409 (RN-07): Intentar clasificar dos veces el Producto 1 en la misma Categoría 1 -> 409 Conflict
+POST {{baseUrl}}/productos/1/categorias
+Content-Type: application/json
+
+{
+  "categoria_id": 1,
+  "es_principal": false
+}
+
+### 10. Filtro categoria_id en listado de productos (sin duplicar filas) -> 200 OK
+GET {{baseUrl}}/productos?categoria_id=1
+
+### 11. Anular Categoría 1 ("Pastas") -> 204 No Content
+DELETE {{baseUrl}}/categorias/1
+
+### 12. RN-06: Verificar que al anular la Categoría 1, el Producto 1 sigue activo (activo: true) -> 200 OK
+GET {{baseUrl}}/productos/1
+
+### 13. Error 409 (RN-08): Intentar clasificar un producto en la Categoría 1 que ahora está anulada -> 409 Conflict
+POST {{baseUrl}}/productos/3/categorias
+Content-Type: application/json
+
+{
+  "categoria_id": 1,
+  "es_principal": false
+}

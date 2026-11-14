@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.modules.categorias.router import router as categorias_router
 from app.core.database import create_db_and_tables
 from app.core.seed import seed_unidades_medida
 from app.modules.categorias import model as categorias_model  # noqa: F401
@@ -31,3 +31,4 @@ app.add_middleware(
 
 app.include_router(unidades_router)
 app.include_router(productos_router)
+app.include_router(categorias_router)

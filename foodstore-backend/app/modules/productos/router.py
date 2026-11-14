@@ -9,6 +9,8 @@ from app.modules.productos.schema import (
     ProductoCreate,
     ProductoPublic,
     ProductoUpdate,
+    ProductoCategoriaCreate,
+    ProductoCategoriaPublic
 )
 
 router = APIRouter(prefix="/api/v1/productos", tags=["Productos"])
@@ -65,3 +67,26 @@ def anular_producto(
     session: SessionDep,
 ) -> None:
     service.anular_producto(session, id)
+    
+@router.post(
+    "/{id}/categorias",
+    response_model=ProductoCategoriaPublic,
+    status_code=status.HTTP_201_CREATED,
+)
+def clasificar_producto(
+    id: Annotated[int, Path(ge=1)],
+    data: ProductoCategoriaCreate,
+    session: SessionDep,
+):
+    return service.clasificar_producto(session, id, data)
+
+
+@router.get(
+    "/{id}/categorias",
+    response_model=list[ProductoCategoriaPublic],
+)
+def listar_categorias_de_producto(
+    id: Annotated[int, Path(ge=1)],
+    session: SessionDep,
+):
+    return service.listar_categorias_de_producto(session, id)
