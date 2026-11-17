@@ -1,6 +1,6 @@
 # Food Store — Frontend Web (Parcial 2 - Programación IV)
 
-Interfaz web de administración del catálogo de productos de Food Store, construida con **React**, **TypeScript** (`strict: true`, sin `any`), **Vite** y **Tailwind CSS 4**, utilizando `fetch` nativo y manejo de estado local con `useState` y `useEffect`.
+Interfaz web de administración del catálogo de productos de Food Store, construida con **React**, **TypeScript** , **Vite** y **Tailwind CSS 4**.
 
 ## Requisitos previos
 
