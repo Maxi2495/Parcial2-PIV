@@ -19,8 +19,6 @@ La cadena de conexión se encuentra definida en el archivo `app/core/database.py
 DATABASE_URL = "postgresql+psycopg2://postgres:admin@localhost:5432/foodstore_db"
 ```
 
-Si tu usuario, contraseña, puerto o nombre de base de datos local son diferentes, editá esa constante en `app/core/database.py` antes de iniciar el servidor.
-
 ## Instalación y ejecución
 
 1. Abrir una terminal dentro de la carpeta `foodstore-backend`.
@@ -29,8 +27,6 @@ Si tu usuario, contraseña, puerto o nombre de base de datos local son diferente
    python -m venv .venv
    # En Windows (PowerShell):
    .venv\Scripts\activate
-   # En Linux / macOS:
-   source .venv/bin/activate
    ```
 3. Instalar las dependencias del proyecto:
    ```bash
@@ -40,7 +36,7 @@ Si tu usuario, contraseña, puerto o nombre de base de datos local son diferente
    ```bash
    fastapi dev app/main.py
    ```
-5. Al iniciar, el evento `lifespan` creará automáticamente las 4 tablas del modelo (`unidadmedida`, `categoria`, `producto`, `productocategoria`) y ejecutará el seed idempotente con las 6 unidades de medida iniciales.
+5. Al iniciar, el `lifespan` creará automáticamente las 4 tablas del modelo (`unidadmedida`, `categoria`, `producto`, `productocategoria`) y ejecutará el "seed" con las 6 unidades de medida iniciales.
 
 ## Documentación y Pruebas
 
